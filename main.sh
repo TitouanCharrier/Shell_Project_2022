@@ -19,14 +19,14 @@ main_menu() {
 	"1" "Generate a file tree"  \
 	"2" "Get a specific information"  \
 	3>&1 1>&2 2>&3)
-	
+
 	if [ $? -eq 1 ] ; then
 		exit
 	fi
 
-	case $CHOICE in	
+	case $CHOICE in
 		"1" ) gene ;;
-		"2" ) info ;; 
+		"2" ) info ;;
 	esac
 }
 
@@ -41,6 +41,39 @@ gene() {
 		main_menu
 	fi
 
+	i=1
+	while [ -n "${Country_Consumption[0,$i]}" ] ; do
+		if [ "${Country_Consumption[0,$i]}" == $choice ] ; then
+			index=$i
+			print_country_col $index
+		fi
+		((i++))
+	done
+
+	i=1
+	while [ -n "${Continent_Consumption[0,$i]}" ] ; do
+		if [ "${Continent_Consumption[0,$i]}" == $choice ] ; then
+			index=$i
+			print_continent_col $index
+		fi
+		((i++))
+	done
+}
+
+print_country_col() {
+	i=1
+	while [ -n "${Country_Consumption[$i,$index]}" ] ; do
+		echo ${Country_Consumption[$i,$index]}
+		((i++))
+	done
+}
+
+print_continent_col() {
+	i=1
+	while [ -n "${Continent_Consumption[$i,$index]}" ] ; do
+		echo ${Continent_Consumption[$i,$index]}
+		((i++))
+	done
 }
 
 # --- beginning --- #
@@ -54,13 +87,21 @@ while IFS=, read -r -a line; do
     ((i++))
 done < ./src_files/Continent_Consumption_TWH.csv
 
+i=0
+declare -A Country_Consumption
+while IFS=, read -r -a line; do
+   for ((j = 0; j < ${#line[@]}; ++j)); do
+        Country_Consumption[$i,$j]=${line[$j],,}
+    done
+    ((i++))
+done < ./src_files/Country_Consumption_TWH.csv
+
 i=1
 while [ -n "${Continent_Consumption[0,$i]}" ] ; do
-	echo ${Continent_Consumption[0,$i]}
+	#echo ${Continent_Consumption[0,$i]}
 	((i++))
 done
 
+
+
 main_menu
-
-
-
