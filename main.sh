@@ -34,16 +34,16 @@ main_menu() {
 
 ask() {
 
-	CHOICE=$(whiptail --title "Generate a file tree" --inputbox  "Generate about :" 8 40 \
+	CHOICE=$(whiptail --title "Generate a file tree" --inputbox  "Generate about :" --cancel-button "Cancel" 8 40 \
 	3>&1 1>&2 2>&3)
 
 	choice=${CHOICE,,}
 
-	if [ $? -eq 1 ] ; then
-		main_menu
+	if [ $? -eq 0 ] ; then
+		test_entry $choice
+	else
+		main_menu 
 	fi
-
-	test_entry $choice
 
 
 }
@@ -52,8 +52,12 @@ test_entry() {
 
 	success=0
 	i=1
+	echo "$choice    "
 	while [ -n "${Country_Consumption[0,$i]}" ] ; do
-		if [ "${Country_Consumption[0,$i]}" == $choice ] ; then
+
+		echo "${Country_Consumption[0,$i]}"
+		
+		if [ "${Country_Consumption[0,$i]}" == "$choice" ] ; then
 			index=$i
 			mode="country"
 			((success++))
@@ -64,7 +68,7 @@ test_entry() {
 
 	i=1
 	while [ -n "${Continent_Consumption[0,$i]}" ] ; do
-		if [ "${Continent_Consumption[0,$i]}" == $choice ] ; then
+		if [ "${Continent_Consumption[0,$i]}" == "$choice" ] ; then
 			index=$i
 			mode="continent"
 			((success++))
@@ -179,13 +183,13 @@ print_graph() {
 
 	fi
 
-	echo -e "set terminal png size 1920,1080 \n set output '$choice.png' \n set title 'Consumption of $CHOICE by years (TWH)' \n plot \"data_set.dat\" w lp " >> temp.p
+	echo -e "set terminal png size 1920,1080 \n set output '$choice.png' \n set title 'Consumption of "$CHOICE" by years (TWH)' \n plot \"data_set.dat\" w lp " >> temp.p
 
-	mkdir -p results/$choice 
+	mkdir -p results/"$choice" 
 
 	gnuplot temp.p
 
-	mv $choice.png results/$choice
+	mv "$choice.png" results/"$choice"
 
 	rm temp.p data_set.dat
 
