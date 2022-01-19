@@ -15,9 +15,9 @@
 
 main_menu() {
 
-	CHOICE=$(whiptail --title "Main menu" --menu --notags "What do you want ?" --cancel-button "Exit" 10 35 3 \
-	"1" "Generate a file tree"  \
-	"2" "Browse country / continents"  \
+	CHOICE=$(whiptail --title "Main menu" --menu --notags "What do you want ?" --cancel-button "Exit" 10 35 4 \
+	"1" "Generate a graph"  \
+	"2" "Generate a csv file"  \
 	"3" "Get a specific information"  \
 	3>&1 1>&2 2>&3)
 
@@ -26,42 +26,85 @@ main_menu() {
 	fi
 
 	case $CHOICE in
-		"1" ) ask ;;
-		"2" ) browser ;;
+		"1" ) method_menu $CHOICE;;
+		"2" ) method_menu $CHOICE;;
 		"3" ) info ;;
 	esac
 }
 
+method_menu() {
+	CHOICE_method=$(whiptail --title "Method selection" --menu --notags "Search by : " --cancel-button "Exit" 10 35 4 \
+	"1" "Name"  \
+	"2" "Browsing"  \
+	3>&1 1>&2 2>&3)
+
+	if [ $? -eq 1 ] ; then
+		exit
+	fi
+
+	if [ $CHOICE -eq 0 ] ; then
+
+		browser_var=0
+
+		case $CHOICE_method in
+			"1" ) ask ;;
+			"2" ) browser $browser_var ;;
+		esac
+	else 
+
+		browser_var=1
+		case $CHOICE_method in
+			"1" ) ask_conso ;;
+			"2" ) browser $browser_var;;
+		esac
+	fi
+}
+
 ask() {
 
-	CHOICE=$(whiptail --title "Generate a file tree" --inputbox  "Generate about :" --cancel-button "Cancel" 8 40 \
+	CHOICE=$(whiptail --title "Generate a graph" --inputbox  "Generate about :" --cancel-button "Back" 8 40 \
 	3>&1 1>&2 2>&3)
 
 	choice=${CHOICE,,}
 
 	if [ $? -eq 0 ] ; then
-		test_entry $choice
+		conso_var=0
+		test_entry $choice $conso_var 
 	else
 		main_menu 
 	fi
+}
 
+ask_conso() {
 
+	CHOICE=$(whiptail --title "Generate csv file" --inputbox  "Generate about :" --cancel-button "Back" 8 40 \
+	3>&1 1>&2 2>&3)
+
+	choice=${CHOICE,,}
+
+	if [ $? -eq 0 ] ; then
+		conso_var=1
+		test_entry $choice $conso_var 
+	else
+		main_menu 
+	fi
 }
 
 test_entry() {
 
 	success=0
 	i=1
-	echo "$choice    "
 	while [ -n "${Country_Consumption[0,$i]}" ] ; do
-
-		echo "${Country_Consumption[0,$i]}"
 		
 		if [ "${Country_Consumption[0,$i]}" == "$choice" ] ; then
 			index=$i
 			mode="country"
 			((success++))
-			print_graph $index $mode
+			if [ $conso_var -eq 0 ] ; then
+				print_graph $index $mode
+			else
+				conso $choice $mode
+			fi
 		fi
 		((i++))
 	done
@@ -72,7 +115,11 @@ test_entry() {
 			index=$i
 			mode="continent"
 			((success++))
-			print_graph $index $mode
+			if [ $conso_var -eq 0 ] ; then
+				print_graph $index $mode
+			else
+				conso $choice $mode
+			fi
 		fi
 		((i++))
 	done
@@ -90,10 +137,8 @@ browser() {
 	"OECD" "" \
 	"BRICS" "" \
 	"Europe" "" \
-	"North" "" \
-	"America" "" \
-	"Latin" "" \
-	"America" "" \
+	"North America" "" \
+	"Latin America" "" \
 	"Asia" "" \
 	"Pacific" "" \
 	"Africa"	"" \
@@ -151,7 +196,13 @@ browser() {
 
 	choice=${CHOICE,,}
 
-	test_entry $choice
+	if [ $browser_var -eq 0 ] ; then
+		conso_var=0
+	else
+		conso_var=1
+	fi
+
+	test_entry $choice $conso_var
 }
 
 end() {
@@ -204,8 +255,104 @@ print_continent_col() {
 	done
 }
 
-add_to_file() {
-	echo -e "${Continent_Consumption[$i,0]} \t ${Continent_Consumption[$i,$index]}"
+info() {
+	CHOICE=$(whiptail --title "Specific informations" --menu --notags "Want to know about : " --cancel-button "Back" 10 60 3 \
+	"1" "The country who produce the more \"green\" electricity"  \
+	"2" "The country who produce the less \"green\" electricity"  \
+	3>&1 1>&2 2>&3)
+
+	if [ $? -eq 1 ] ; then
+		main_menu
+	fi
+
+	case $CHOICE in
+		"1" ) green_max ;;
+		"2" ) green_min ;;
+		"3" ) info ;;
+	esac
+}
+
+green_max() {
+
+	i=1
+	max_value=0
+	max_index=1
+	while [ -n "${Country_Renewable[$i,5]}" ] ; do
+		
+		echo "${Country_Renewable[$i,5]}"
+		echo $max_value
+
+		if [ $(bc <<< "${Country_Renewable[$i,5]} < $max_value") -eq 1 ] ; then
+			echo high
+			max_value=${Country_Renewable[$i,5]}
+			max_index=$i
+		fi
+		((i++))
+	done
+
+	whiptail --msgbox --title "Result" "${Country_Renewable[$max_index,0]} is the country who produce the greatest amount of \"green\" electricity \n his production is ${Country_Renewable[$max_index,5]} TWH" 10 40
+}
+
+green_min() {
+
+	i=1
+	min_value=0
+	min_index=1
+	while [ -n "${Country_Renewable[$i,5]}" ] ; do
+
+		if [ "${Country_Renewable[$i,5]}" < $min_value ] ; then
+			min_value=${Country_Renewable[$i,5]}
+			min_index=$i
+		fi
+		((i++))
+	done
+
+	whiptail --msgbox --title "Result" "${Country_Renewable[$min_index,0]} is the country who produce the greatest amount of \"green\" electricity \n his production is ${Country_Renewable[$min_index,5]} TWH" 10 40
+}
+
+_conso_(){
+	head -n 1 src_files/Country_Consumption_TWH.csv | awk -F',' ' { for (i=1+1; i<= NF; i++) print $i} ' 
+	echo "Pick a country from the list above"
+	read choice
+	mkdir -p results/$choice
+	col=`awk -F',' ' { for (i=1; i<= NF; i++) print i, $i; exit} ' src_files/Country_Consumption_TWH.csv | grep $choice | awk '{print $1}'`
+	cat src_files/Country_Consumption_TWH.csv | cut -d ',' -f1 $col > results/$choice/conso.csv
+	sed -i -e "s/,/ /g" results/$choice/conso.csv
+	cat results/$choice/conso.csv
+	}
+
+	conso(){
+	i=1
+	if [ "$mode" == "country" ] ; then
+
+		echo -e "Year,$choice\n" >> results/"$choice"/"$choice.csv"
+
+		while [ -n "${Country_Consumption[$i,$index]}" ] ; do
+			echo -e "${Country_Consumption[$i,0]},${Country_Consumption[$i,$index]}\n" >> results/"$choice"/"$choice.csv"
+			((i++))
+		done
+
+	else
+
+		while [ -n "${Continent_Consumption[$i,$index]}" ] ; do
+			echo -e "${Continent_Consumption[$i,0]},${Continent_Consumption[$i,$index]}\n" >> results/"$choice"/"$choice.csv"
+			((i++))
+		done
+	fi
+	end
+	}
+
+
+ReneblePowerGenPerYear(){
+	echo "enter a year between 1990 and 2017 to his renewable power generation"
+	read year
+	if [ 1990 -lt $year -a $year -lt 2017 ]
+	then
+		head -n 1 src_files/renewablePowerGeneration97-17.csv | cut -d ',' -f2,3,4,5
+		grep $year src_files/renewablePowerGeneration97-17.csv | cut -d ',' -f2,3,4,5 #/{for (i=2; i<=NF; i++) print $i}
+	else
+		echo "enter a year between 1990 and 2017"   
+	fi
 }
 
 # --- beginning --- #
@@ -228,10 +375,13 @@ while IFS=, read -r -a line; do
     ((i++))
 done < ./src_files/Country_Consumption_TWH.csv
 
-i=1
-while [ -n "${Continent_Consumption[0,$i]}" ] ; do
-	#echo ${Continent_Consumption[0,$i]}
-	((i++))
-done
+i=0
+declare -A Country_Renewable
+while IFS=, read -r -a line; do
+   for ((j = 0; j < ${#line[@]}; ++j)); do
+        Country_Renewable[$i,$j]=${line[$j],,}
+    done
+    ((i++))
+done < ./src_files/top20CountriesPowerGeneration.csv
 
 main_menu
