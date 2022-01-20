@@ -44,10 +44,9 @@ method_menu() {
 		main_menu
 	fi
 
-	if [ $CHOICE -eq 0 ] ; then
+	if [ $CHOICE -eq 1 ] ; then
 
 		browser_var=0
-
 		case $CHOICE_method in
 			"1" ) ask ;;
 			"2" ) browser $browser_var ;;
