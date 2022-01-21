@@ -294,11 +294,13 @@ green_max() {
 	end
 }
 
+#this function execute the menu who able you know what pays produce the more fossil power
 fossil_max() {
 
 	temp=`echo "${Country_Consumption[31,1]} - ${Country_Renewable[1,5]}" | bc`
 	whiptail --msgbox --title "Result" "${Country_Consumption[0,1]} is the country who produce the greatest amount of \"fossil\" electricity \n his production is $temp TWH" 10 40
-}
+	end
+}	
 
 #this function make the tree and set the csv inside
 conso(){
