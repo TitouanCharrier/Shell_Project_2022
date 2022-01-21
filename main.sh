@@ -258,7 +258,7 @@ print_graph() {
 info_menu() {
 	CHOICE=$(whiptail --title "Specific informations" --menu --notags "Want to know about : " --cancel-button "Back" 11 60 4 \
 	"1" "The country who produce the more \"green\" electricity"  \
-	"2" "The country who produce the less \"green\" electricity"  \
+	"2" "The country who produce the more \"fossil\" electricity"  \
 	"3" "The production of renewable energy"  \
 	"4" "The comparison of renewable / fossil energy"  \
 	3>&1 1>&2 2>&3)
@@ -269,7 +269,7 @@ info_menu() {
 
 	case $CHOICE in
 		"1" ) green_max ;;
-		"2" ) green_min ;;
+		"2" ) fossil_max ;;
 		"3" ) renewable_power_gen_per_year ;;
 		"4" ) global_generation ;;
 	esac 
@@ -294,23 +294,10 @@ green_max() {
 	end
 }
 
-#this function execute the menu who able you know what pays produce the less green power
-green_min() {
+fossil_max() {
 
-	i=1
-	min_value=${Country_Renewable[1,5]}
-	min_index=1
-	while [ -n "${Country_Renewable[$i,5]}" ] ; do
-
-		if [ $(bc <<< "${Country_Renewable[$i,5]} < $min_value") -eq 1 ] ; then
-			min_value=${Country_Renewable[$i,5]}
-			min_index=$i
-		fi
-		((i++))
-	done
-
-	whiptail --msgbox --title "Result" "${Country_Renewable[$min_index,0]} is the country who produce the smallest amount of \"green\" electricity \n his production is ${Country_Renewable[$min_index,5]} TWH" 10 40
-	end
+	temp=`echo "${Country_Consumption[31,1]} - ${Country_Renewable[1,5]}" | bc`
+	whiptail --msgbox --title "Result" "${Country_Consumption[0,1]} is the country who produce the greatest amount of \"fossil\" electricity \n his production is $temp TWH" 10 40
 }
 
 #this function make the tree and set the csv inside
