@@ -394,6 +394,7 @@ global_generation() {
 	${Global_Renewable[8,0]} >> ${Global_Renewable[8,1]} | ${Global_Fossil[8,1]} << ${Global_Fossil[8,0]} \n
 	${Global_Renewable[9,0]} >> ${Global_Renewable[9,1]} | ${Global_Fossil[9,1]} << ${Global_Fossil[9,0]} \n
 	" 30 70
+	end
 }
 
 
